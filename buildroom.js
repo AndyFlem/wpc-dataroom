@@ -2,12 +2,20 @@ const Excel = require('exceljs')
 const fs = require('fs')
 
 
-const catalogFile = 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\202402 WPC Documents Catalogue.xlsx'
-const outFolder = 'D:\\temp\\CapLink\\'
+//const catalogFile = 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\202402 WPC Documents Catalogue.xlsx'
+//const outFolder = 'D:\\temp\\CapLink\\'
+
+const catalogFile = 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\202402 WPC Documents Catalogue.xlsx'
+const outFolder = 'D:\\OneDrive\\Western Power Company\\WPC Dataroom - Dataroom\\CapLink\\'
+
+
 const filterColumn = 'CAPLINK Dataroom'
+
 const sps = {
-  WPCWorking: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents',
-  WPCHSESManagementSystem: 'D:\\Western Power Company\\Western Power Company\\WPC HSES Management System - General'
+  //WPCWorking: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents',
+  //WPCHSESManagementSystem: 'D:\\Western Power Company\\Western Power Company\\WPC HSES Management System - General'
+  WPCWorking: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents',
+  WPCHSESManagementSystem: 'D:\\OneDrive\\Western Power Company\\WPC HSES Management System - General' 
 }
 
 const patt = /\.[^.\\/:*?"<>|\r\n]+$/i
