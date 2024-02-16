@@ -5,26 +5,31 @@ const { DateTime } = require("luxon")
 const configs = {
   sable: {
     catalogFile: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\202402 WPC Documents Catalogue.xlsx',
-    outFolder: 'D:\\temp\\CapLink\\',
+    outFolder: 'D:\\temp\\',
     sps: {
       WPCWorking: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents',
       WPCHSESManagementSystem: 'D:\\Western Power Company\\Western Power Company\\WPC HSES Management System - General'
     }
   },
   cloud: {
-    catalogFile: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\202402 WPC Documents Catalogue.xlsx',
-    outFolder: 'D:\\temp\\CapLink\\',
+    catalogFile: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\202402 WPC Documents Catalogue.xlsx',
+    outFolder: 'D:\\OneDrive\\Western Power Company\\WPC Dataroom - Dataroom\\',
     sps: {
-      WPCWorking: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents',
-      WPCHSESManagementSystem: 'D:\\Western Power Company\\Western Power Company\\WPC HSES Management System - General'
+      WPCWorking: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents',
+      WPCHSESManagementSystem: 'D:\\OneDrive\\Western Power Company\\WPC HSES Management System - General'
     }
   }  
 }
 
-const config = configs.sable
+const config = configs.cloud
 const catalogFile = config.catalogFile
-const outFolder = config.outFolder
-const filterColumn = 'CAPLINK Dataroom'
+const filterColumn = ''
+const roomName = 'Full'//'CapLink'
+const outFolder = config.outFolder + roomName + '\\'
+
+if (!fs.existsSync(outFolder)) {
+  fs.mkdirSync(outFolder)
+}
 
 const patt = /\.[^.\\/:*?"<>|\r\n]+$/i
 
@@ -41,7 +46,7 @@ async function main() {
 
     ws.eachRow((row, rowNumber) => {
       if (rowNumber === 1) return
-      if (row.values[columnDict[filterColumn]]) { 
+      if (row.values[columnDict['Name']] && (filterColumn =='' || row.values[columnDict[filterColumn]])) { 
         console.log('Row ' + rowNumber + ' = ' + row.values[columnDict['Short Title']])
         
         const fileDate = DateTime.fromISO(row.values[columnDict['DateString']])
