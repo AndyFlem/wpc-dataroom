@@ -23,8 +23,8 @@ const configs = {
 
 const config = configs.cloud
 const catalogFile = config.catalogFile
-const filterColumn = ''
-const roomName = 'Full'//'CapLink'
+const filterColumn = 'CAPLINK Dataroom2' //'HSS Assess Doc'//
+const roomName = 'CapLink'//'Full'//'CapLink' 'HSS'
 const outFolder = config.outFolder + roomName + '\\'
 
 if (!fs.existsSync(outFolder)) {
@@ -44,47 +44,57 @@ async function main() {
     columns.shift()
     columnDict=Object.fromEntries(columns)
 
+
     ws.eachRow((row, rowNumber) => {
+      let filter = filterColumn ? row.values[columnDict[filterColumn]] : false
+      if ((typeof filter==='object ') && filter.result) {filter=filter.result}
+
       if (rowNumber === 1) return
-      if (row.values[columnDict['Name']] && (filterColumn =='' || row.values[columnDict[filterColumn]])) { 
-        console.log('Row ' + rowNumber + ' = ' + row.values[columnDict['Short Title']])
-        
-        const fileDate = DateTime.fromISO(row.values[columnDict['DateString']])
-        let outPath = outFolder + row.values[columnDict['Area']]
-        const title = row.values[columnDict['Short Title']]
-        const extension = row.values[columnDict['Name']].match(patt)[0]
+      
+      if (filter) { 
+        if (row.values[columnDict['Name']]) {
+          
+          const fileDate = DateTime.fromISO(row.values[columnDict['DateString']])
+          let outPath = outFolder + row.values[columnDict['Area']]
+          const title = row.values[columnDict['Short Title']]
+          const extension = row.values[columnDict['Name']].match(patt)[0]
 
-        const inLocation = config.sps[row.values[columnDict['SPSite']].result] + '\\' + decodeURI(row.values[columnDict['SPLocation']].result).replace('\General/','/').replace('%26','&').replace('/Shared Documents/', '')
+          const inLocation = config.sps[row.values[columnDict['SPSite']].result] + '\\' + decodeURI(row.values[columnDict['SPLocation']].result).replace('\General/','/').replace('%26','&').replace('/Shared Documents/', '')
 
-        try {
-          if (!fs.existsSync(outPath)) {
-            fs.mkdirSync(outPath)
-          }
-          if (row.values[columnDict['Area2']]) {
-            outPath += '\\' + row.values[columnDict['Area2']]
+          try {
             if (!fs.existsSync(outPath)) {
               fs.mkdirSync(outPath)
             }
-          }
-          if (row.values[columnDict['Area3']]) {
-            outPath += '\\' + row.values[columnDict['Area3']]
-            if (!fs.existsSync(outPath)) {
-              fs.mkdirSync(outPath)
+            if (row.values[columnDict['Area2']]) {
+              outPath += '\\' + row.values[columnDict['Area2']]
+              if (!fs.existsSync(outPath)) {
+                fs.mkdirSync(outPath)
+              }
             }
-          }
-          const outLocation = outPath + '\\' + fileDate.toFormat('yyyyLLdd') + ' ' + title.trim() + extension.trim()
-          if (!fs.existsSync(outLocation)) {
-            if (!fs.existsSync(inLocation)) {
-              console.log('Source folder does not exist:', inLocation)
-            } else {
-              fs.copyFileSync(inLocation, outLocation)
+            if (row.values[columnDict['Area3']]) {
+              outPath += '\\' + row.values[columnDict['Area3']]
+              if (!fs.existsSync(outPath)) {
+                fs.mkdirSync(outPath)
+              }
             }
+            const outLocation = outPath + '\\' + fileDate.toFormat('yyyyLLdd') + ' ' + title.trim() + extension.trim()
+            if (!fs.existsSync(outLocation)) {
+              if (!fs.existsSync(inLocation)) {
+                console.log('Source folder does not exist:', inLocation)
+                
+              } else {
+                fs.copyFileSync(inLocation, outLocation)
+                console.log('Row ' + rowNumber + ' = ' + row.values[columnDict['Short Title']])
+              }
+            }
+          } catch (err) {
+            console.error(err)
           }
-        } catch (err) {
-          console.error(err)
+        } else {
+          console.log('! No name')
         }
       } else {
-        console.log('Row ' + rowNumber + ' = NOT IN EXPORT [' + row.values[columnDict['Short Title']] + ']')
+        console.log('[Row ' + rowNumber + ']')
       }
     })
 
