@@ -55,12 +55,13 @@ const HSSColumns = [
   '12 Climate Change'
 ]
 
-const config = configs.sable
-const catalogFile = config.catalogFile
 
 // **************************
+const config = configs.cloud
 const room = rooms.HSS
 // **************************
+
+const catalogFile = config.catalogFile
 
 const filterColumn = room.filterColumn
 const roomName = room.roomName
