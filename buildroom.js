@@ -33,7 +33,7 @@ const rooms = {
     roomName: 'CapLink'
   },
   All: {
-    filterColumn: '',
+    filterColumn: false,
     roomName:'All'
   }    
 
@@ -57,17 +57,15 @@ const HSSColumns = [
 
 
 // **************************
-const config = configs.cloud
-const room = rooms.HSS
+const config = configs.sable
+const room = rooms.All
+const folderOnly = true
 // **************************
 
 const catalogFile = config.catalogFile
 
 const filterColumn = room.filterColumn
 const roomName = room.roomName
-
-
-const folderOnly = false
 
 const outFolder = config.outFolder + roomName 
 
@@ -121,7 +119,7 @@ async function main() {
   ws.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return
 
-    let filter = filterColumn ? row.values[columnDict[filterColumn]] : false
+    let filter = filterColumn ? row.values[columnDict[filterColumn]] : true
     if ((typeof filter==='object ') && filter.result) {filter=filter.result}
     
     if (filter) { 
@@ -155,6 +153,7 @@ async function main() {
         } else {
           doCopy(inLocation, outPath, fileName, 'Row ' + rowNumber + ': ' + fileName)
         }
+        row.getCell(columnDict['All']).value = DateTime.now().toISO()
       } else {
         console.log('Row ' + rowNumber + ': ' + '!!!!!!! No Name defined')
       }
@@ -162,4 +161,5 @@ async function main() {
       console.log('Filtered Row ' + rowNumber + '')
     }
   })
+  workbook.xlsx.writeFile(catalogFile)
 }
