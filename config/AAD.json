@@ -1,7 +1,0 @@
-{
-    "scopes": ["https://westernpower.sharepoint.com/.default"],
-    "auth": {
-        "clientId": "f0536b52-034f-49d7-b5d0-339a0b1b9497",
-        "authority": "https://login.microsoftonline.com/82a04285-0318-423f-b953-bcec333c384b/oauth2/v2.0/token",
-        "clientSecret": "9_l8Q~HFry9.j0AgR.UwjeCmsFWbCQ.xvscsCa_M"}
-}

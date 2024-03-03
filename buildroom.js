@@ -1,73 +1,22 @@
+const configData = require('./config')
+
 const Excel = require('exceljs')
 const fs = require('fs')
-const { DateTime } = require("luxon")
+const { DateTime } = require('luxon')
 
 const patt = /\.[^.\\/:*?"<>|\r\n]+$/i
 
-const configs = {
-  sable: {
-    catalogFile: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\202402 WPC Documents Catalogue.xlsx',
-    outFolder: 'D:\\temp\\Datarooms\\',
-    sps: {
-      WPCWorking: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents',
-      WPCHSESManagementSystem: 'D:\\Western Power Company\\Western Power Company\\WPC HSES Management System - General'
-    }
-  },
-  cloud: {
-    catalogFile: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\202402 WPC Documents Catalogue.xlsx',
-    outFolder: 'D:\\OneDrive\\Western Power Company\\WPC Dataroom - Dataroom\\',
-    sps: {
-      WPCWorking: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents',
-      WPCHSESManagementSystem: 'D:\\OneDrive\\Western Power Company\\WPC HSES Management System - General'
-    }
-  }  
-}
+const config = configData.config
+console.log('Room: ', config.room)
 
-const rooms = {
-  HSS: {
-    filterColumn: 'HSS Assess Doc',
-    roomName:'HSS'
-  },
-  Caplink: {
-    filterColumn: 'CAPLINK Dataroom2',
-    roomName: 'CapLink'
-  },
-  All: {
-    filterColumn: false,
-    roomName:'All'
-  }    
+const folderSet = config.folderSets[config.folderSet]
+const catalogFile = folderSet.catalogFolder + folderSet.catalogFile
+console.log('Catalog: ', catalogFile)
 
-}
+const filterColumn = config.rooms[config.room].filterColumn
+console.log('Filter column: ', filterColumn)
 
-const HSSColumns = [
-  '0 General',
-  '1 Environmental and Social',
-  '2 Labour and Working Conditions',
-  '3 Water Quality and Sediments',
-  '4 Community Impacts and Safety',
-  '5 Resettlement',
-  '6 Biodiversity and Invasive Species',
-  '7 Indigenous Peoples',
-  '8 Cultural Heritage',
-  '9 Governance and Procurement',
-  '10 Communications and Consultation',
-  '11 Hydrological Resource',
-  '12 Climate Change'
-]
-
-
-// **************************
-const config = configs.sable
-const room = rooms.All
-const folderOnly = true
-// **************************
-
-const catalogFile = config.catalogFile
-
-const filterColumn = room.filterColumn
-const roomName = room.roomName
-
-const outFolder = config.outFolder + roomName 
+const outFolder = folderSet.outFolder + config.room
 
 if (!fs.existsSync(outFolder)) {
   fs.mkdirSync(outFolder)
@@ -75,14 +24,14 @@ if (!fs.existsSync(outFolder)) {
 
 main()
 
-function makeFolder(folder) {
+function makeFolder (folder) {
   if (!fs.existsSync(folder)) {
     console.log('Creating folder:', folder)
     fs.mkdirSync(folder)
   }
 }
 
-function makePath(path) {
+function makePath (path) {
   let workingPath = ''
   path.forEach((folder) => {
     workingPath += folder + '\\'
@@ -90,76 +39,89 @@ function makePath(path) {
   })
 }
 
-function doCopy(inLocation, outPath, fileName, log) {
+function doCopy (inLocation, outPath, fileName, log) {
   makePath(outPath)
-  const outLocation = outPath.join('\\') + '\\' + fileName  
+  const outLocation = outPath.join('\\') + '\\' + fileName
 
-  if (!fs.existsSync(outLocation)) {
-    if (!fs.existsSync(inLocation)) {
-      console.log('Source does not exist:', inLocation)
-    } else {
-      if (!folderOnly) {
-        fs.copyFileSync(inLocation, outLocation)
-      }
-      console.log(log)      
-    }
-  }
+  //  if (!fs.existsSync(outLocation)) {
+  //    if (!fs.existsSync(inLocation)) {
+  //      console.log('Source does not exist:', inLocation)
+  //    } else {
+  //      if (!config.folderOnly) {
+  fs.copyFileSync(inLocation, outLocation)
+  //      }
+  console.log(log)
+//    }
+//  }
 }
 
-async function main() {
-
+async function main () {
   const workbook = new Excel.Workbook()
   await workbook.xlsx.readFile(catalogFile)
 
   const ws = workbook.getWorksheet('Documents')
   const columns = ws.getRow(1).values.map((column, index) => [column, index])
   columns.shift()
-  columnDict=Object.fromEntries(columns)
+  const columnDict = Object.fromEntries(columns)
 
   ws.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return
 
-    let filter = filterColumn ? row.values[columnDict[filterColumn]] : true
-    if ((typeof filter==='object ') && filter.result) {filter=filter.result}
-    
-    if (filter) { 
-      if (row.values[columnDict['Name']]) {
-        let fileDate = DateTime.fromISO(row.values[columnDict['DateString']])
-        
+    if (row.values[columnDict.Name]) {
+      let filter = row.values[columnDict[filterColumn]]
+      if ((typeof filter === 'object') && filter.result) { filter = filter.result }
+
+      const inLocation = folderSet.sps[row.values[columnDict.SPSite].result] + '\\' + decodeURI(row.values[columnDict.SPLocation].result).replace('General/', '/').replace('%26', '&').replace('/Shared Documents/', '')
+      if (!fs.existsSync(inLocation)) {
+        console.log('Source does not exist:', inLocation)
+        filter = false
+      }
+      const prevDate = DateTime.fromISO(filter)
+      if (prevDate.isValid) {
+        const stats = fs.statSync(inLocation)
+        if (DateTime.fromJSDate(stats.mtime) > prevDate) {
+          console.log(row.values[columnDict['Short Title']], 'File modified, copying again.')
+          filter = true
+        } else {
+          console.log(row.values[columnDict['Short Title']], 'File not modified.')
+          filter = false
+        }
+      }
+      // console.log(rowNumber, filter)
+      if (filter) {
+        let fileDate = DateTime.fromISO(row.values[columnDict.DateString])
         if (!fileDate.isValid) { fileDate = DateTime.fromISO('2024-01-01') }
 
-        const inLocation = config.sps[row.values[columnDict['SPSite']].result] + '\\' + decodeURI(row.values[columnDict['SPLocation']].result).replace('\General/','/').replace('%26','&').replace('/Shared Documents/', '')
-
         const title = row.values[columnDict['Short Title']]
-        const extension = row.values[columnDict['Name']].match(patt)[0]
+        const extension = row.values[columnDict.Name].match(patt)[0]
         const fileName = fileDate.toFormat('yyyyLLdd') + ' ' + title.trim() + extension.trim()
+        let outPath
 
-        let outPath = [outFolder, row.values[columnDict['Area']]]
-        if (row.values[columnDict['Area2']]) {
-          outPath.push(row.values[columnDict['Area2']])
-        }
-        if (row.values[columnDict['Area3']]) {
-          outPath.push(row.values[columnDict['Area3']])
-        }
- 
-        if (roomName === 'HSS') {
-          outPath=[outPath[0],'',...outPath.slice(1)]
-          HSSColumns.forEach((column) => {
-            if (row.values[columnDict[column]] == 1) {
-              outPath[1] = column
+        if (config.room === 'HSS') {
+          // outPath = [outPath[0], '', ...outPath.slice(1)]
+          config.HSSColumns.forEach((column) => {
+            if (row.values[columnDict[column]] === 1) {
+              outPath = [outFolder, column]
               doCopy(inLocation, outPath, fileName, 'Row ' + rowNumber + ': ' + fileName)
             }
           })
         } else {
+          outPath = [outFolder, row.values[columnDict.Area]]
+          if (row.values[columnDict.Area2]) {
+            outPath.push(row.values[columnDict.Area2])
+          }
+          if (row.values[columnDict.Area3]) {
+            outPath.push(row.values[columnDict.Area3])
+          }
           doCopy(inLocation, outPath, fileName, 'Row ' + rowNumber + ': ' + fileName)
         }
-        row.getCell(columnDict['All']).value = DateTime.now().toISO()
+        row.getCell(columnDict[filterColumn]).value = DateTime.now().toISO()
       } else {
-        console.log('Row ' + rowNumber + ': ' + '!!!!!!! No Name defined')
+        // console.log('Filtered Row ' + rowNumber + '')
       }
     } else {
-      console.log('Filtered Row ' + rowNumber + '')
+      console.log(rowNumber, 'No Name found!!!!')
     }
   })
-  workbook.xlsx.writeFile(catalogFile)
+  workbook.xlsx.writeFile(folderSet.catalogFolder + 'Catalog Out.xlsx')
 }
