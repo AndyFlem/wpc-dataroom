@@ -1,12 +1,12 @@
 module.exports = {
   config: {
     folderSet: 'laptop',
-    room: 'Test',
+    room: 'HSS',
     folderOnly: true,
     folderSets: {
       laptop: {
         catalogFolder: 'C:\\Users\\kabom\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
-        catalogFile: '202402 WPC Documents Catalogue.xlsx',
+        catalogFile: '202403 WPC Documents Catalogue.xlsx',
         outFolder: 'C:\\temp\\Datarooms\\',
         sps: {
           WPCWorking: 'C:\\Users\\kabom\\Western Power Company\\WPC Working - Documents',
@@ -15,7 +15,7 @@ module.exports = {
       },
       sable: {
         catalogFolder: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
-        catalogFile: '202402 WPC Documents Catalogue.xlsx',
+        catalogFile: '202403 WPC Documents Catalogue.xlsx',
         outFolder: 'D:\\temp\\Datarooms\\',
         sps: {
           WPCWorking: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents',
@@ -24,7 +24,7 @@ module.exports = {
       },
       cloud: {
         catalogFolder: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
-        catalogFile: '202402 WPC Documents Catalogue.xlsx',
+        catalogFile: '202403 WPC Documents Catalogue.xlsx',
         outFolder: 'D:\\OneDrive\\Western Power Company\\WPC Dataroom - Dataroom\\',
         sps: {
           WPCWorking: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents',
@@ -48,16 +48,16 @@ module.exports = {
 
     },
     HSSColumns: [
-      '0 General',
-      '1 Environmental and Social',
-      '2 Labour and Working Conditions',
-      '3 Water Quality and Sediments',
-      '4 Community Impacts and Safety',
-      '5 Resettlement',
-      '6 Biodiversity and Invasive Species',
-      '7 Indigenous Peoples',
-      '8 Cultural Heritage',
-      '9 Governance and Procurement',
+      '00 General',
+      '01 Environmental and Social',
+      '02 Labour and Working Conditions',
+      '03 Water Quality and Sediments',
+      '04 Community Impacts and Safety',
+      '05 Resettlement',
+      '06 Biodiversity and Invasive Species',
+      '07 Indigenous Peoples',
+      '08 Cultural Heritage',
+      '09 Governance and Procurement',
       '10 Communications and Consultation',
       '11 Hydrological Resource',
       '12 Climate Change'

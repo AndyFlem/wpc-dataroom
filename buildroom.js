@@ -43,16 +43,31 @@ function doCopy (inLocation, outPath, fileName, log) {
   makePath(outPath)
   const outLocation = outPath.join('\\') + '\\' + fileName
 
-  //  if (!fs.existsSync(outLocation)) {
-  //    if (!fs.existsSync(inLocation)) {
-  //      console.log('Source does not exist:', inLocation)
-  //    } else {
-  //      if (!config.folderOnly) {
-  fs.copyFileSync(inLocation, outLocation)
-  //      }
+  if (!config.folderOnly) {
+    fs.copyFileSync(inLocation, outLocation)
+  }
   console.log(log)
-//    }
-//  }
+}
+
+function processLink (rawLink) {
+  let link
+  if (typeof rawLink === 'object') {
+    link = rawLink.text
+  } else {
+    link = rawLink
+  }
+  const decoded = decodeURI(link).replace('%26', '&')
+  const lastSlash = decoded.lastIndexOf('/')
+  const longName = decoded.substring(lastSlash + 1)
+  const longPath = decoded.substring(0, lastSlash + 1)
+  const query = longName.lastIndexOf('?')
+  const name = longName.substring(0, query)
+
+  const path = longPath.substring(longPath.indexOf('/Shared Documents') + 17).replace('/General', '')
+  const remPath = longPath.substring(0, longPath.indexOf('/Shared Documents'))
+  const site = remPath.substring(remPath.lastIndexOf('/') + 1)
+  const extension = name.match(patt)[0]
+  return { site, path, name, extension }
 }
 
 async function main () {
@@ -66,16 +81,18 @@ async function main () {
 
   ws.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return
-
-    if (row.values[columnDict.Name]) {
+    if (row.values[columnDict.Link]) {
+      const fileInfo = processLink(row.values[columnDict.Link])
       let filter = row.values[columnDict[filterColumn]]
       if ((typeof filter === 'object') && filter.result) { filter = filter.result }
 
-      const inLocation = folderSet.sps[row.values[columnDict.SPSite].result] + '\\' + decodeURI(row.values[columnDict.SPLocation].result).replace('General/', '/').replace('%26', '&').replace('/Shared Documents/', '')
+      // console.log(fileInfo)
+      const inLocation = folderSet.sps[fileInfo.site] + '/' + fileInfo.path + fileInfo.name
       if (!fs.existsSync(inLocation)) {
         console.log('Source does not exist:', inLocation)
         filter = false
       }
+
       const prevDate = DateTime.fromISO(filter)
       if (prevDate.isValid) {
         const stats = fs.statSync(inLocation)
@@ -93,8 +110,7 @@ async function main () {
         if (!fileDate.isValid) { fileDate = DateTime.fromISO('2024-01-01') }
 
         const title = row.values[columnDict['Short Title']]
-        const extension = row.values[columnDict.Name].match(patt)[0]
-        const fileName = fileDate.toFormat('yyyyLLdd') + ' ' + title.trim() + extension.trim()
+        const fileName = fileDate.toFormat('yyyyLLdd') + ' ' + title.trim() + fileInfo.extension
         let outPath
 
         if (config.room === 'HSS') {
@@ -123,5 +139,5 @@ async function main () {
       console.log(rowNumber, 'No Name found!!!!')
     }
   })
-  workbook.xlsx.writeFile(folderSet.catalogFolder + 'Catalog Out.xlsx')
+  workbook.xlsx.writeFile(folderSet.catalogFolder + folderSet.catalogFile)
 }
