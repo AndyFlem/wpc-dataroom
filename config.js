@@ -1,8 +1,8 @@
 module.exports = {
   config: {
-    folderSet: 'laptop',
-    room: 'HSS',
-    folderOnly: true,
+    folderSet: 'cloud',
+    room: 'Summary',
+    folderOnly: false,
     folderSets: {
       laptop: {
         catalogFolder: 'C:\\Users\\kabom\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
@@ -24,8 +24,8 @@ module.exports = {
       },
       cloud: {
         catalogFolder: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
-        catalogFile: '202403 WPC Documents Catalogue.xlsx',
-        outFolder: 'D:\\OneDrive\\Western Power Company\\WPC Dataroom - Dataroom\\',
+        catalogFile: '202503 WPC Documents Catalogue.xlsx',
+        outFolder: 'D:\\Datarooms\\',//'D:\\OneDrive\\Western Power Company\\Western Power Ngonye Falls Dataroom - General\\',
         sps: {
           WPCWorking: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents',
           WPCHSESManagementSystem: 'D:\\OneDrive\\Western Power Company\\WPC HSES Management System - General'
@@ -37,15 +37,17 @@ module.exports = {
         filterColumn: 'Test'
       },
       HSS: {
-        filterColumn: 'HSS Assess Doc'
+        filterColumn: 'HSS Assessment'
       },
-      CapLink: {
-        filterColumn: 'CAPLINK Dataroom2'
+      Summary: {
+        filterColumn: 'Summary'
       },
       All: {
         filterColumn: false
+      },
+      SavAdditional: {
+        filterColumn: 'Sav Additional'
       }
-
     },
     HSSColumns: [
       '00 General',

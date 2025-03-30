@@ -39,14 +39,20 @@ function makePath (path) {
   })
 }
 
-function doCopy (inLocation, outPath, fileName, log) {
+function doCopy (inLocation, outPath, fileName, rowNo) {
   makePath(outPath)
   const outLocation = outPath.join('\\') + '\\' + fileName
 
   if (!config.folderOnly) {
-    fs.copyFileSync(inLocation, outLocation)
+    if (!fs.existsSync(outLocation)) {
+      fs.copyFileSync(inLocation, outLocation)
+      console.log(rowNo + ': ' + fileName)
+    } else {
+      console.log(rowNo)
+    }
   }
-  console.log(log)
+  
+  //console.log('.')
 }
 
 function processLink (rawLink) {
@@ -83,16 +89,20 @@ async function main () {
     if (rowNumber === 1) return
     if (row.values[columnDict.Link]) {
       const fileInfo = processLink(row.values[columnDict.Link])
-      let filter = row.values[columnDict[filterColumn]]
-      if ((typeof filter === 'object') && filter.result) { filter = filter.result }
+      let filter = true 
+      if (filterColumn!==false) {
+        filter = row.values[columnDict[filterColumn]]
+        if ((typeof filter === 'object') && filter.result) { filter = filter.result }
+      }
 
       // console.log(fileInfo)
       const inLocation = folderSet.sps[fileInfo.site] + '/' + fileInfo.path + fileInfo.name
       if (!fs.existsSync(inLocation)) {
-        console.log('Source does not exist:', inLocation)
+        console.log(rowNumber, ' Source does not exist:', inLocation)
         filter = false
       }
 
+      /*
       const prevDate = DateTime.fromISO(filter)
       if (prevDate.isValid) {
         const stats = fs.statSync(inLocation)
@@ -104,21 +114,25 @@ async function main () {
           filter = false
         }
       }
+      */
       // console.log(rowNumber, filter)
       if (filter) {
-        let fileDate = DateTime.fromISO(row.values[columnDict.DateString])
-        if (!fileDate.isValid) { fileDate = DateTime.fromISO('2024-01-01') }
+        let fileDate = DateTime.fromJSDate(row.values[columnDict.Date])
+        if (!fileDate.isValid) { 
+          console.log(rowNumber + ': Bad date - ', row.values[columnDict.Date])
+          fileDate = DateTime.fromISO('2024-01-01') 
+        }
 
         const title = row.values[columnDict['Short Title']]
         const fileName = fileDate.toFormat('yyyyLLdd') + ' ' + title.trim() + fileInfo.extension
         let outPath
 
-        if (config.room === 'HSS') {
+        if (config.room === '___HSS') {
           // outPath = [outPath[0], '', ...outPath.slice(1)]
           config.HSSColumns.forEach((column) => {
             if (row.values[columnDict[column]] === 1) {
               outPath = [outFolder, column]
-              doCopy(inLocation, outPath, fileName, 'Row ' + rowNumber + ': ' + fileName)
+              doCopy(inLocation, outPath, fileName, rowNumber) // + ': ' + fileName)
             }
           })
         } else {
@@ -129,9 +143,9 @@ async function main () {
           if (row.values[columnDict.Area3]) {
             outPath.push(row.values[columnDict.Area3])
           }
-          doCopy(inLocation, outPath, fileName, 'Row ' + rowNumber + ': ' + fileName)
+          doCopy(inLocation, outPath, fileName, rowNumber) // + ': ' + fileName)
         }
-        row.getCell(columnDict[filterColumn]).value = DateTime.now().toISO()
+        //row.getCell(columnDict[filterColumn]).value = DateTime.now().toISO()
       } else {
         // console.log('Filtered Row ' + rowNumber + '')
       }
@@ -139,5 +153,5 @@ async function main () {
       console.log(rowNumber, 'No Name found!!!!')
     }
   })
-  workbook.xlsx.writeFile(folderSet.catalogFolder + folderSet.catalogFile)
+  // workbook.xlsx.writeFile(folderSet.catalogFolder + folderSet.catalogFile)
 }
