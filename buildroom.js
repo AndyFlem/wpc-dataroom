@@ -44,7 +44,7 @@ function doCopy (inLocation, outPath, fileName, rowNo) {
   const outLocation = outPath.join('\\') + '\\' + fileName
 
   if (!config.folderOnly) {
-    if (!fs.existsSync(outLocation)) {
+    if (!fs.existsSync(outLocation) && !config.dryrun) {
       fs.copyFileSync(inLocation, outLocation)
       console.log(rowNo + ': ' + fileName)
     } else {
@@ -83,6 +83,7 @@ async function main () {
   const ws = workbook.getWorksheet('Documents')
   const columns = ws.getRow(1).values.map((column, index) => [column, index])
   columns.shift()
+  //console.log(columns)
   const columnDict = Object.fromEntries(columns)
 
   ws.eachRow((row, rowNumber) => {

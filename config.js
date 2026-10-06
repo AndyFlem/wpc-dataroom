@@ -1,8 +1,9 @@
 module.exports = {
   config: {
     folderSet: 'cloud',
-    room: 'Summary',
+    room: 'All',
     folderOnly: false,
+    dryrun: true,
     folderSets: {
       laptop: {
         catalogFolder: 'C:\\Users\\kabom\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
@@ -23,8 +24,8 @@ module.exports = {
         }
       },
       cloud: {
-        catalogFolder: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
-        catalogFile: '202503 WPC Documents Catalogue.xlsx',
+        catalogFolder: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\WPC Document Catalogue\\',
+        catalogFile: '202609 WPC Documents Catalogue.xlsx',
         outFolder: 'D:\\Datarooms\\',//'D:\\OneDrive\\Western Power Company\\Western Power Ngonye Falls Dataroom - General\\',
         sps: {
           WPCWorking: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents',
@@ -45,8 +46,11 @@ module.exports = {
       All: {
         filterColumn: false
       },
-      SavAdditional: {
-        filterColumn: 'Sav Additional'
+      Save: {
+        filterColumn: 'SAVE'
+      },
+      Kanona: {
+        filterColumn: 'Kanona'
       }
     },
     HSSColumns: [
