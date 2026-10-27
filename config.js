@@ -1,22 +1,22 @@
 module.exports = {
   config: {
-    folderSet: 'cloud',
-    room: 'All',
+    folderSet: 'laptop',
+    room: 'LenderDD',
     folderOnly: false,
-    dryrun: true,
+    dryrun: false,
     folderSets: {
       laptop: {
-        catalogFolder: 'C:\\Users\\kabom\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
-        catalogFile: '202403 WPC Documents Catalogue.xlsx',
+        catalogFolder: 'C:\\Users\\AndyFleming\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\WPC Document Catalogue\\',
+        catalogFile: '202610 WPC Documents Catalogue.xlsx',
         outFolder: 'C:\\temp\\Datarooms\\',
         sps: {
-          WPCWorking: 'C:\\Users\\kabom\\Western Power Company\\WPC Working - Documents',
-          WPCHSESManagementSystem: 'C:\\Users\\kabom\\Western Power Company\\WPC HSES Management System - Documents\\General'
+          WPCWorking: 'C:\\Users\\AndyFleming\\Western Power Company\\WPC Working - Documents',
+          WPCHSESManagementSystem: 'C:\\Users\\AndyFleming\\Western Power Company\\WPC HSES Management System - Documents\\General'
         }
       },
       sable: {
         catalogFolder: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
-        catalogFile: '202403 WPC Documents Catalogue.xlsx',
+        catalogFile: '202610 WPC Documents Catalogue.xlsx',
         outFolder: 'D:\\temp\\Datarooms\\',
         sps: {
           WPCWorking: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents',
@@ -25,7 +25,7 @@ module.exports = {
       },
       cloud: {
         catalogFolder: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\WPC Document Catalogue\\',
-        catalogFile: '202609 WPC Documents Catalogue.xlsx',
+        catalogFile: '202610 WPC Documents Catalogue.xlsx',
         outFolder: 'D:\\Datarooms\\',//'D:\\OneDrive\\Western Power Company\\Western Power Ngonye Falls Dataroom - General\\',
         sps: {
           WPCWorking: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents',
@@ -34,25 +34,18 @@ module.exports = {
       }
     },
     rooms: {
-      Test: {
-        filterColumn: 'Test'
-      },
-      HSS: {
-        filterColumn: 'HSS Assessment'
+      LenderDD: {
+        filterColumn: 'LenderDD'
       },
       Summary: {
         filterColumn: 'Summary'
       },
       All: {
         filterColumn: false
-      },
-      Save: {
-        filterColumn: 'SAVE'
-      },
-      Kanona: {
-        filterColumn: 'Kanona'
       }
     },
+    catalogColumns: ['Date', 'Update Date', 'Short Title', 'Type', 'State',
+      'Organisation', 'Author', 'Version', 'Extent', 'Scheme'],
     HSSColumns: [
       '00 General',
       '01 Environmental and Social',

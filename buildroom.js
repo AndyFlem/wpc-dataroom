@@ -22,7 +22,7 @@ if (!fs.existsSync(outFolder)) {
   fs.mkdirSync(outFolder)
 }
 
-main()
+main().catch(console.error)
 
 function makeFolder (folder) {
   if (!fs.existsSync(folder)) {
@@ -42,17 +42,86 @@ function makePath (path) {
 function doCopy (inLocation, outPath, fileName, rowNo) {
   makePath(outPath)
   const outLocation = outPath.join('\\') + '\\' + fileName
+  const existed = fs.existsSync(outLocation)
 
   if (!config.folderOnly) {
-    if (!fs.existsSync(outLocation) && !config.dryrun) {
+    if (!existed && !config.dryrun) {
       fs.copyFileSync(inLocation, outLocation)
       console.log(rowNo + ': ' + fileName)
     } else {
       console.log(rowNo)
     }
   }
-  
+
   //console.log('.')
+  return { outLocation, isNew: !existed }
+}
+
+function cellValue (value) {
+  if (value === null || value === undefined) return ''
+  if (value instanceof Date) return value
+  if (typeof value === 'object') {
+    if ('result' in value) return cellValue(value.result)
+    if ('text' in value) return value.text
+    if (value.richText) return value.richText.map((part) => part.text).join('')
+    return ''
+  }
+  return value
+}
+
+async function writeRoomCatalog (entries, columnDict) {
+  const columns = config.catalogColumns.filter((column) => {
+    if (columnDict[column] === undefined) {
+      console.log('Catalog column not found in master catalogue:', column)
+      return false
+    }
+    return true
+  })
+
+  const workbook = new Excel.Workbook()
+  const ws = workbook.addWorksheet('Catalog', { views: [{ state: 'frozen', ySplit: 1 }] })
+  ws.columns = [
+    { header: 'Status', key: 'Status', width: 8 },
+    { header: 'Name', key: 'Name', width: 60 },
+    { header: 'Area', key: 'Area', width: 30 },
+    { header: 'Area2', key: 'Area2', width: 30 },
+    { header: 'Area3', key: 'Area3', width: 30 },
+    ...columns.map((column) => ({ header: column, key: column, width: column === 'Description' ? 60 : 16 }))
+  ]
+  ws.getRow(1).font = { bold: true }
+
+  const sortKey = (entry) => [0, 1, 2].map((i) => entry.areas[i] || '').concat(entry.name)
+  entries.sort((a, b) => {
+    const keyA = sortKey(a)
+    const keyB = sortKey(b)
+    for (let i = 0; i < keyA.length; i++) {
+      const diff = keyA[i].localeCompare(keyB[i])
+      if (diff) return diff
+    }
+    return 0
+  })
+  entries.forEach((entry) => {
+    const values = {
+      Status: entry.status,
+      Name: { text: entry.name, hyperlink: entry.path + '\\' + entry.name },
+      Area: entry.areas[0] || '',
+      Area2: entry.areas[1] || '',
+      Area3: entry.areas[2] || ''
+    }
+    columns.forEach((column) => {
+      values[column] = cellValue(entry.row.values[columnDict[column]])
+    })
+    const row = ws.addRow(values)
+    columns.forEach((column) => {
+      if (values[column] instanceof Date) row.getCell(column).numFmt = 'yyyy-mm-dd'
+    })
+  })
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columns.length } }
+
+  const catalogOut = outFolder + '\\' + DateTime.now().toFormat('yyyyLLdd HHmmss') + ' Catalog.xlsx'
+  await workbook.xlsx.writeFile(catalogOut)
+  const newCount = entries.filter((entry) => entry.status === 'New').length
+  console.log('Catalog written:', catalogOut, '(' + entries.length + ' files, ' + newCount + ' new)')
 }
 
 function processLink (rawLink) {
@@ -85,6 +154,13 @@ async function main () {
   columns.shift()
   //console.log(columns)
   const columnDict = Object.fromEntries(columns)
+  const entries = []
+
+  const copyAndRecord = (inLocation, outPath, fileName, rowNumber, row) => {
+    const { isNew } = doCopy(inLocation, outPath, fileName, rowNumber)
+    const areas = outPath.slice(1)
+    entries.push({ status: isNew ? 'New' : '', name: fileName, areas, path: areas.join('\\'), row })
+  }
 
   ws.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return
@@ -133,7 +209,7 @@ async function main () {
           config.HSSColumns.forEach((column) => {
             if (row.values[columnDict[column]] === 1) {
               outPath = [outFolder, column]
-              doCopy(inLocation, outPath, fileName, rowNumber) // + ': ' + fileName)
+              copyAndRecord(inLocation, outPath, fileName, rowNumber, row)
             }
           })
         } else {
@@ -144,7 +220,7 @@ async function main () {
           if (row.values[columnDict.Area3]) {
             outPath.push(row.values[columnDict.Area3])
           }
-          doCopy(inLocation, outPath, fileName, rowNumber) // + ': ' + fileName)
+          copyAndRecord(inLocation, outPath, fileName, rowNumber, row)
         }
         //row.getCell(columnDict[filterColumn]).value = DateTime.now().toISO()
       } else {
@@ -154,5 +230,6 @@ async function main () {
       console.log(rowNumber, 'No Name found!!!!')
     }
   })
+  await writeRoomCatalog(entries, columnDict)
   // workbook.xlsx.writeFile(folderSet.catalogFolder + folderSet.catalogFile)
 }
