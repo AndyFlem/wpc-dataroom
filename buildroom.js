@@ -1,4 +1,5 @@
 const configData = require('./config')
+const { getToken, resolveShortLink } = require('./graph')
 
 const Excel = require('exceljs')
 const fs = require('fs')
@@ -124,13 +125,51 @@ async function writeRoomCatalog (entries, columnDict) {
   console.log('Catalog written:', catalogOut, '(' + entries.length + ' files, ' + newCount + ' new)')
 }
 
-function processLink (rawLink) {
-  let link
-  if (typeof rawLink === 'object') {
-    link = rawLink.text
-  } else {
-    link = rawLink
+function linkUrl (rawLink) {
+  if (typeof rawLink !== 'object') return rawLink
+  // Short links often display the file name rather than the URL
+  if (typeof rawLink.text === 'string' && /^https?:/i.test(rawLink.text)) return rawLink.text
+  return rawLink.hyperlink || rawLink.text
+}
+
+function isShortLink (link) {
+  return /\/:[a-z]+:\/[sg]\//i.test(link) && !/\/Shared( |%20)Documents/i.test(link)
+}
+
+// folder is the path within the document library, e.g. '/General/Sub/'
+function fileInfoFrom (site, folder, name) {
+  const extension = (name.match(patt) || [''])[0]
+  return { site, path: folder.replace('/General', ''), name, extension }
+}
+
+function sourceLocation (fileInfo) {
+  return folderSet.sps[fileInfo.site] + '/' + fileInfo.path + fileInfo.name
+}
+
+// Library view links (.../Forms/AllItems.aspx?id=/sites/Site/Shared Documents/folder/name)
+// carry the server-relative path in the id parameter
+function libraryViewPath (link) {
+  try {
+    const id = new URL(link).searchParams.get('id')
+    return id && id.includes('/Shared Documents/') ? id : null
+  } catch (error) {
+    return null
   }
+}
+
+function processLink (link) {
+  const serverPath = libraryViewPath(link)
+  if (serverPath) {
+    const libraryAt = serverPath.indexOf('/Shared Documents')
+    const lastSlash = serverPath.lastIndexOf('/')
+    const sitePath = serverPath.substring(0, libraryAt)
+    return fileInfoFrom(
+      sitePath.substring(sitePath.lastIndexOf('/') + 1),
+      serverPath.substring(libraryAt + 17, lastSlash + 1),
+      serverPath.substring(lastSlash + 1)
+    )
+  }
+
   const decoded = decodeURI(link).replace('%26', '&')
   const lastSlash = decoded.lastIndexOf('/')
   const longName = decoded.substring(lastSlash + 1)
@@ -138,11 +177,60 @@ function processLink (rawLink) {
   const query = longName.lastIndexOf('?')
   const name = longName.substring(0, query)
 
-  const path = longPath.substring(longPath.indexOf('/Shared Documents') + 17).replace('/General', '')
+  const folder = longPath.substring(longPath.indexOf('/Shared Documents') + 17)
   const remPath = longPath.substring(0, longPath.indexOf('/Shared Documents'))
   const site = remPath.substring(remPath.lastIndexOf('/') + 1)
-  const extension = name.match(patt)[0]
-  return { site, path, name, extension }
+  return fileInfoFrom(site, folder, name)
+}
+
+// Short links are cached in the catalog as Folder = 'site/folder/' and FileName = 'name'
+function cachedFileInfo (row, columnDict) {
+  const folderCell = cellValue(row.values[columnDict.Folder])
+  const name = cellValue(row.values[columnDict.FileName])
+  if (!folderCell || !name) return null
+  const firstSlash = folderCell.indexOf('/')
+  if (firstSlash < 0) return null
+  return fileInfoFrom(folderCell.substring(0, firstSlash), folderCell.substring(firstSlash), name)
+}
+
+async function resolveShortLinks (ws, columnDict) {
+  const pending = []
+  ws.eachRow((row, rowNumber) => {
+    if (rowNumber === 1 || !row.values[columnDict.Link]) return
+    const link = linkUrl(row.values[columnDict.Link])
+    if (!isShortLink(link)) return
+    const cached = cachedFileInfo(row, columnDict)
+    // Re-resolve if the cached file has moved, unless the site isn't synced locally anyway
+    if (cached && (folderSet.sps[cached.site] === undefined || fs.existsSync(sourceLocation(cached)))) return
+    pending.push({ row, rowNumber, link })
+  })
+  if (!pending.length) return 0
+
+  console.log('Resolving', pending.length, 'short links via Microsoft Graph')
+  const token = await getToken()
+  let resolved = 0
+  for (const { row, rowNumber, link } of pending) {
+    try {
+      const { site, folder, name } = await resolveShortLink(link, token)
+      row.getCell(columnDict.Folder).value = site + folder
+      row.getCell(columnDict.FileName).value = name
+      console.log(rowNumber + ': resolved -> ' + site + folder + name)
+      resolved++
+    } catch (error) {
+      console.log(rowNumber, ' Could not resolve short link:', link, error.message)
+    }
+  }
+  return resolved
+}
+
+async function saveCatalog (workbook) {
+  try {
+    fs.copyFileSync(catalogFile, catalogFile.replace(/\.xlsx$/i, '.bak.xlsx'))
+    await workbook.xlsx.writeFile(catalogFile)
+    console.log('Catalogue updated with resolved short links:', catalogFile)
+  } catch (error) {
+    console.log('Could not save catalogue (is it open in Excel?):', error.message)
+  }
 }
 
 async function main () {
@@ -154,6 +242,10 @@ async function main () {
   columns.shift()
   //console.log(columns)
   const columnDict = Object.fromEntries(columns)
+  if (columnDict.Folder === undefined || columnDict.FileName === undefined) {
+    throw new Error('Catalogue needs Folder and FileName columns to cache short links')
+  }
+  const resolvedCount = await resolveShortLinks(ws, columnDict)
   const entries = []
 
   const copyAndRecord = (inLocation, outPath, fileName, rowNumber, row) => {
@@ -165,15 +257,20 @@ async function main () {
   ws.eachRow((row, rowNumber) => {
     if (rowNumber === 1) return
     if (row.values[columnDict.Link]) {
-      const fileInfo = processLink(row.values[columnDict.Link])
-      let filter = true 
+      const link = linkUrl(row.values[columnDict.Link])
+      const fileInfo = isShortLink(link) ? cachedFileInfo(row, columnDict) : processLink(link)
+      if (!fileInfo) {
+        console.log(rowNumber, ' Unresolved short link:', link)
+        return
+      }
+      let filter = true
       if (filterColumn!==false) {
         filter = row.values[columnDict[filterColumn]]
         if ((typeof filter === 'object') && filter.result) { filter = filter.result }
       }
 
       // console.log(fileInfo)
-      const inLocation = folderSet.sps[fileInfo.site] + '/' + fileInfo.path + fileInfo.name
+      const inLocation = sourceLocation(fileInfo)
       if (!fs.existsSync(inLocation)) {
         console.log(rowNumber, ' Source does not exist:', inLocation)
         filter = false
@@ -231,5 +328,6 @@ async function main () {
     }
   })
   await writeRoomCatalog(entries, columnDict)
-  // workbook.xlsx.writeFile(folderSet.catalogFolder + folderSet.catalogFile)
+  // Saved even on a dry run so short links don't need resolving again
+  if (resolvedCount) await saveCatalog(workbook)
 }

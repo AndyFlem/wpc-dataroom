@@ -1,9 +1,15 @@
 module.exports = {
   config: {
-    folderSet: 'laptop',
-    room: 'LenderDD',
+    folderSet: 'sable',
+    room: 'Dataroom October 2026',
     folderOnly: false,
-    dryrun: false,
+    dryrun: true,
+    graph: {
+      tenantId: '82a04285-0318-423f-b953-bcec333c384b',
+      clientId: '8abd6508-fe42-4a13-9c5a-9d48ee4c05f4',
+      scopes: ['Files.Read.All'],
+      tokenCache: '.msal-cache.json'
+    },
     folderSets: {
       laptop: {
         catalogFolder: 'C:\\Users\\AndyFleming\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\WPC Document Catalogue\\',
@@ -15,18 +21,18 @@ module.exports = {
         }
       },
       sable: {
-        catalogFolder: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\Catalogue\\',
+        catalogFolder: 'D:\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\WPC Document Catalogue\\',
         catalogFile: '202610 WPC Documents Catalogue.xlsx',
-        outFolder: 'D:\\temp\\Datarooms\\',
+        outFolder: 'D:\\Western Power Company\\Ngonye Falls Project Finance - Documents\\',
         sps: {
-          WPCWorking: 'D:\\Western Power Company\\Western Power Company\\WPC Working - Documents',
-          WPCHSESManagementSystem: 'D:\\Western Power Company\\Western Power Company\\WPC HSES Management System - General'
+          WPCWorking: 'D:\\Western Power Company\\WPC Working - Documents',
+          WPCHSESManagementSystem: 'D:\\Western Power Company\\WPC HSES Management System - General'
         }
       },
       cloud: {
         catalogFolder: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents\\PRM Project Management\\WPC Document Catalogue\\',
         catalogFile: '202610 WPC Documents Catalogue.xlsx',
-        outFolder: 'D:\\Datarooms\\',//'D:\\OneDrive\\Western Power Company\\Western Power Ngonye Falls Dataroom - General\\',
+        outFolder: 'D:\\Datarooms\\',
         sps: {
           WPCWorking: 'D:\\OneDrive\\Western Power Company\\WPC Working - Documents',
           WPCHSESManagementSystem: 'D:\\OneDrive\\Western Power Company\\WPC HSES Management System - General'
@@ -34,7 +40,7 @@ module.exports = {
       }
     },
     rooms: {
-      LenderDD: {
+      'Dataroom October 2026': {
         filterColumn: 'LenderDD'
       },
       Summary: {
