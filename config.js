@@ -3,7 +3,7 @@ module.exports = {
     folderSet: 'sable',
     room: 'Dataroom October 2026',
     folderOnly: false,
-    dryrun: true,
+    dryrun: false,
     graph: {
       tenantId: '82a04285-0318-423f-b953-bcec333c384b',
       clientId: '8abd6508-fe42-4a13-9c5a-9d48ee4c05f4',
