@@ -1,7 +1,7 @@
 module.exports = {
   config: {
     folderSet: 'sable',
-    room: 'Dataroom October 2026',
+    room: 'Ngonye Falls Dataroom',
     folderOnly: false,
     dryrun: false,
     graph: {
@@ -40,7 +40,7 @@ module.exports = {
       }
     },
     rooms: {
-      'Dataroom October 2026': {
+      'Ngonye Falls Dataroom': {
         filterColumn: 'LenderDD'
       },
       Summary: {
